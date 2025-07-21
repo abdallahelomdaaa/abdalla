@@ -1,0 +1,317 @@
+ <!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8"/>
+<title>رؤية - نظام الإدارة المالية</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #111;
+        color: gold;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+    }
+    h1 { text-align: center; }
+    .section-btn {
+        font-size: 22px;
+        padding: 18px 0;
+        width: 100%;
+        border-radius: 12px;
+        margin: 15px auto;
+        background-color: gold;
+        color: #111;
+        border: none;
+        display: block;
+        cursor: pointer;
+    }
+    .form-section {
+        display: none;
+        background-color: #222;
+        margin-top: 10px;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    input, button {
+        width: 100%;
+        padding: 14px;
+        margin: 5px 0;
+        border-radius: 6px;
+        border: none;
+        font-size: 20px;
+    }
+    .label {
+        margin-top: 10px;
+        display: block;
+        color: #ffc;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        color: gold;
+    }
+    th, td {
+        border: 1px solid #444;
+        padding: 10px;
+        text-align: center;
+    }
+    th {
+        background-color: #333;
+    }
+    td {
+        background-color: #222;
+    }
+    button.delete-btn {
+        background: none;
+        border: none;
+        color: red;
+        font-size: 20px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+<h1>
+  <img src="rooo.png" alt="شعار رؤية" style="width: 160px; max-width: 80%; display: block; margin: 20px auto;">
+</h1>
+
+<!-- كل الأقسام -->
+<button class="section-btn" onclick="toggleSection('income')">💰 قسم الدخل</button>
+<div class="form-section" id="income">
+    <label class="label">الوصف</label><input id="in_desc" type="text"/>
+    <label class="label">المبلغ</label><input id="in_amount" type="number"/>
+    <button onclick="saveIncome()">💾 حفظ</button>
+    <div id="incomeList"></div>
+</div>
+
+<button class="section-btn" onclick="toggleSection('expenses')">📤 قسم المصروفات</button>
+<div class="form-section" id="expenses">
+    <label class="label">الوصف</label><input id="ex_desc" type="text"/>
+    <label class="label">المبلغ</label><input id="ex_amount" type="number"/>
+    <button onclick="saveExpense()">💾 حفظ</button>
+    <div id="expensesList"></div>
+</div>
+
+<button class="section-btn" onclick="toggleSection('foreignFunds')">💸 قسم الأموال بالخارج</button>
+<div class="form-section" id="foreignFunds">
+    <label class="label">الوصف</label><input id="ff_desc" type="text"/>
+    <label class="label">المبلغ</label><input id="ff_amount" type="number"/>
+    <button onclick="saveForeignFund()">💾 حفظ</button>
+    <div id="foreignFundsList"></div>
+</div>
+
+<button class="section-btn" onclick="toggleSection('reports')">📊 تقارير الأرباح</button>
+<div class="form-section" id="reports">
+    <div id="reportContent"></div>
+</div>
+
+<button class="section-btn" onclick="toggleSection('foreignReports')">🌍 تقارير الأموال بالخارج</button>
+<div class="form-section" id="foreignReports">
+    <div id="foreignReportContent"></div>
+</div>
+
+<button class="section-btn" onclick="toggleSection('totalExpenses')">📦 إجمالي المصروفات</button>
+<div class="form-section" id="totalExpenses">
+    <div id="totalExpensesContent"></div>
+</div>
+
+<!-- 🆕 قسم الأموال عليه -->
+<button class="section-btn" onclick="toggleSection('moneyOwed')">💳 قسم الأموال عليه</button>
+<div class="form-section" id="moneyOwed">
+    <label class="label">الوصف</label><input id="mo_desc" type="text"/>
+    <label class="label">المبلغ</label><input id="mo_amount" type="number"/>
+    <button onclick="saveMoneyOwed()">💾 حفظ</button>
+    <div id="moneyOwedList"></div>
+</div>
+
+<!-- 🆕 تقرير الأموال عليه -->
+<button class="section-btn" onclick="toggleSection('moneyOwedReport')">📍 تقارير الأموال عليه</button>
+<div class="form-section" id="moneyOwedReport">
+    <div id="moneyOwedReportContent"></div>
+</div>
+
+<script>
+    const toggleSection = id => {
+        const section = document.getElementById(id);
+        const isOpen = section.style.display === 'block';
+        document.querySelectorAll('.form-section').forEach(sec => sec.style.display = 'none');
+        if (!isOpen) {
+            section.style.display = 'block';
+            if (id === 'reports') showReport();
+            if (id === 'foreignReports') showForeignReport();
+            if (id === 'totalExpenses') showTotalExpenses();
+            if (id === 'moneyOwed') showMoneyOwed();
+            if (id === 'moneyOwedReport') showMoneyOwedReport();
+        }
+    }
+
+    let income = JSON.parse(localStorage.getItem("income") || "[]");
+    let expenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+    let foreignFunds = JSON.parse(localStorage.getItem("foreignFunds") || "[]");
+    let moneyOwed = JSON.parse(localStorage.getItem("moneyOwed") || "[]");
+
+    const saveIncome = () => {
+        let entry = {
+            desc: in_desc.value,
+            amount: parseFloat(in_amount.value),
+            date: new Date().toLocaleDateString('ar-EG')
+        };
+        income.push(entry);
+        localStorage.setItem("income", JSON.stringify(income));
+        showIncome();
+    }
+
+    const saveExpense = () => {
+        let entry = {
+            desc: ex_desc.value,
+            amount: parseFloat(ex_amount.value),
+            date: new Date().toLocaleDateString('ar-EG')
+        };
+        expenses.push(entry);
+        localStorage.setItem("expenses", JSON.stringify(expenses));
+        showExpenses();
+    }
+
+    const saveForeignFund = () => {
+        let entry = {
+            desc: ff_desc.value,
+            amount: parseFloat(ff_amount.value),
+            date: new Date().toLocaleDateString('ar-EG')
+        };
+        foreignFunds.push(entry);
+        localStorage.setItem("foreignFunds", JSON.stringify(foreignFunds));
+        showForeignFunds();
+    }
+
+    const saveMoneyOwed = () => {
+        let entry = {
+            desc: mo_desc.value,
+            amount: parseFloat(mo_amount.value),
+            date: new Date().toLocaleDateString('ar-EG')
+        };
+        moneyOwed.push(entry);
+        localStorage.setItem("moneyOwed", JSON.stringify(moneyOwed));
+        showMoneyOwed();
+        showMoneyOwedReport();
+    }
+
+    const showIncome = () => {
+        if (income.length === 0) return incomeList.innerHTML = "<p>لا يوجد دخل مسجل.</p>";
+        incomeList.innerHTML = `
+        <table><thead><tr><th>الوصف</th><th>المبلغ</th><th>التاريخ</th><th>حذف</th></tr></thead><tbody>
+        ${income.map((e, i) => `
+            <tr><td>${e.desc}</td><td>${e.amount}</td><td>${e.date}</td>
+            <td><button class="delete-btn" onclick="deleteIncome(${i})">❌</button></td></tr>
+        `).join("")}</tbody></table>`;
+    }
+
+    const showExpenses = () => {
+        if (expenses.length === 0) return expensesList.innerHTML = "<p>لا يوجد مصروفات.</p>";
+        expensesList.innerHTML = `
+        <table><thead><tr><th>الوصف</th><th>المبلغ</th><th>التاريخ</th><th>حذف</th></tr></thead><tbody>
+        ${expenses.map((e, i) => `
+            <tr><td>${e.desc}</td><td>${e.amount}</td><td>${e.date}</td>
+            <td><button class="delete-btn" onclick="deleteExpense(${i})">❌</button></td></tr>
+        `).join("")}</tbody></table>`;
+    }
+
+    const showForeignFunds = () => {
+        if (foreignFunds.length === 0) return foreignFundsList.innerHTML = "<p>لا يوجد أموال بالخارج.</p>";
+        foreignFundsList.innerHTML = `
+        <table><thead><tr><th>الوصف</th><th>المبلغ</th><th>التاريخ</th><th>حذف</th></tr></thead><tbody>
+        ${foreignFunds.map((e, i) => `
+            <tr><td>${e.desc}</td><td>${e.amount}</td><td>${e.date}</td>
+            <td><button class="delete-btn" onclick="deleteForeignFund(${i})">❌</button></td></tr>
+        `).join("")}</tbody></table>`;
+    }
+
+    const showMoneyOwed = () => {
+        if (moneyOwed.length === 0) return moneyOwedList.innerHTML = "<p>لا يوجد أموال عليك.</p>";
+        moneyOwedList.innerHTML = `
+        <table><thead><tr><th>الوصف</th><th>المبلغ</th><th>التاريخ</th><th>تم السداد</th></tr></thead><tbody>
+        ${moneyOwed.map((e, i) => `
+            <tr><td>${e.desc}</td><td>${e.amount}</td><td>${e.date}</td>
+            <td><button class="delete-btn" onclick="payMoneyOwed(${i})">✅</button></td></tr>
+        `).join("")}</tbody></table>`;
+    }
+
+    const payMoneyOwed = i => {
+        if (confirm("هل تم سداد هذا المبلغ؟")) {
+            moneyOwed.splice(i, 1);
+            localStorage.setItem("moneyOwed", JSON.stringify(moneyOwed));
+            showMoneyOwed();
+            showMoneyOwedReport();
+        }
+    }
+
+    const deleteIncome = i => {
+        if (confirm("هل تريد حذف هذا الدخل؟")) {
+            income.splice(i, 1);
+            localStorage.setItem("income", JSON.stringify(income));
+            showIncome();
+        }
+    }
+
+    const deleteExpense = i => {
+        if (confirm("هل تريد حذف هذه المصروف؟")) {
+            expenses.splice(i, 1);
+            localStorage.setItem("expenses", JSON.stringify(expenses));
+            showExpenses();
+        }
+    }
+
+    const deleteForeignFund = i => {
+        if (confirm("هل تريد حذف هذا السجل؟")) {
+            foreignFunds.splice(i, 1);
+            localStorage.setItem("foreignFunds", JSON.stringify(foreignFunds));
+            showForeignFunds();
+        }
+    }
+
+    const showReport = () => {
+        let totalIncome = income.reduce((sum, e) => sum + e.amount, 0);
+        let totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+        let profit = totalIncome - totalExpenses;
+        reportContent.innerHTML = `
+            <h2>📊 ملخص الأرباح</h2>
+            <p>إجمالي الدخل: <strong>${totalIncome} جنيه</strong></p>
+            <p>إجمالي المصروفات: <strong>${totalExpenses} جنيه</strong></p>
+            <p>صافي الربح: <strong>${profit} جنيه</strong></p>
+        `;
+    }
+
+    const showForeignReport = () => {
+        let total = foreignFunds.reduce((sum, e) => sum + e.amount, 0);
+        foreignReportContent.innerHTML = `
+            <h2>🌍 ملخص الأموال بالخارج</h2>
+            <p>إجمالي الأموال بالخارج: <strong>${total} جنيه</strong></p>
+        `;
+    }
+
+    const showTotalExpenses = () => {
+        let total = expenses.reduce((sum, e) => sum + e.amount, 0);
+        totalExpensesContent.innerHTML = `
+            <h2>📦 إجمالي المصروفات</h2>
+            <p>إجمالي المصروفات: <strong>${total} جنيه</strong></p>
+        `;
+    }
+
+    const showMoneyOwedReport = () => {
+        let total = moneyOwed.reduce((sum, e) => sum + e.amount, 0);
+        moneyOwedReportContent.innerHTML = `
+            <h2>📍 ملخص الأموال عليه</h2>
+            <p>إجمالي المبالغ المستحقة عليك: <strong>${total} جنيه</strong></p>
+        `;
+    }
+
+    // عرض البيانات عند الفتح
+    showIncome();
+    showExpenses();
+    showForeignFunds();
+    showTotalExpenses();
+    showMoneyOwed();
+    showMoneyOwedReport();
+</script>
+</body>
+</html>
